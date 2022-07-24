@@ -1,65 +1,120 @@
 import React from 'react';
+import { useStateMany } from './hooks/index';
 
 const SECURITY_CODE = 'paradigm';
 
 
 export const UseState = ({ name }) => {
-  const [value, setValue] = React.useState('');
-  const [error, setError] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
 
-  console.log(value);
+  const [state, setState] = useStateMany({
+    value: '',
+    error: false,
+    loading: false,
+    deleted: false,
+    confirmed: false,
+  });
+
+  console.log(state);
   
   React.useEffect(() => {
     console.log("Started the effect");
 
-    if(!!loading) {
-      setError(false);
+    if(!!state.loading) {
+      setState({
+        error: false, 
+      });
       setTimeout(() => {
         console.log("Doing the check")
         
-        if(value === SECURITY_CODE) {
-          setLoading(false);
+        if(state.value === SECURITY_CODE) {
+          setState({
+            error: false,
+            loading: false, 
+            confirmed: true,
+          });
         } else {
-          setError(true);
-          setLoading(false);
+          setState({
+            loading: false,
+            error: true, 
+          });
         }
-  
       }, 2000);
     }
 
     console.log("Finish the effect");
-  }, [loading]);
+  }, [state.loading]);
 
-  return (
-    <div>
-      <h2>{name} Delete</h2>
+  if (!state.deleted && !state.confirmed) {
+    return (
+      <div>
+        <h2>{name} Delete</h2>
+  
+        <p>Please, you write security code </p>
+  
+        {state.error && !state.loading && (
+          <p>Error: Wrong security code</p>
+        )}
+        {state.loading && (
+          <p>Loading...</p>
+        )}
+        
+        <input  
+          disabled={state.loading}
+          placeholder='Security code'
+          value={state.value}
+          onChange={(event) => {
+            setState({
+              value: event.target.value, 
+            });
+          }}
+        />
+        <button
+          onClick={() => {
+            setState({
+              loading: true, 
+            });
+          }}
+        >Check</button>
+      </div>
+    )
+  } else if (!!state.confirmed && !state.deleted) {
+    return (
+      <React.Fragment>
+        <p>We have confirmed. are you security?</p>
+        <button onClick={() => {
+          setState({
+            deleted: true, 
+          });
+        }} 
+        >
+          Yes, delete
+        </button>
+        <button onClick={() => {
+          setState({
+            confirmed: false, 
+            value: '',
+          });
+        }}>
+          No, cancel
+        </button>
+      </React.Fragment>
+    );
+  } else {
+    return (
+      <React.Fragment>
+        <p>Deleted state</p>
 
-      <p>Please, you write security code </p>
+        <button onClick={() => {
+          setState({
+            confirmed: false,
+            deleted: false,
+          
+          });
+        }}>
+          Reset, go back
+        </button>
+      </React.Fragment>
+    );
 
-      {error && !loading && (
-        <p>Error: Wrong security code</p>
-      )}
-      {loading && (
-        <p>Loading...</p>
-      )}
-      
-
-      <input  
-        disabled={loading}
-        placeholder='Security code'
-        value={value}
-        onChange={(event) => {
-          // setError(false);
-          setValue(event.target.value);
-        }}
-      />
-      <button
-        onClick={() => {
-          setLoading(true);
-          // setError(false);
-        }}
-      >Check</button>
-    </div>
-  )
+  }
 }
