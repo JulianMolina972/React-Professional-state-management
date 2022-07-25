@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useReducer, useEffect } from 'react';
 
 const SECURITY_CODE = 'paradigm';
 
@@ -11,21 +11,87 @@ const initialState = {
   confirmed: false,
 };
 
+
+const actionTypes = {
+  confirmed: 'CONFIRMED',
+  error: 'ERROR',
+  check: 'CHECK',
+  write: 'WRITE',
+  deleted: 'DELETE',
+  reset: 'RESET',
+}
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case  actionTypes.confirmed:
+      return {
+        ...state,
+        error: false,
+        loading: false, 
+        confirmed: true,
+      }
+    case actionTypes.error:
+      return {
+        ...state,
+        error: true,
+        loading: false,
+      };
+    case actionTypes.check:
+      return {
+        ...state,
+        loading: true,
+      };
+    case actionTypes.write:
+      return {
+        ...state,
+        value: action.payload, 
+      }
+    case actionTypes.deleted:
+      return {
+        ...state,
+        deleted: true,
+      }
+    case actionTypes.reset:
+      return {
+        ...state,
+        confirmed: false, 
+        value: '',
+        deleted: false,
+      }
+    default:
+      return {
+        ...state,
+      };
+  }
+};
+
+
+
 export const UseReducer = ({ name }) => {
 
-  const [state, dispatch] = React.useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  React.useEffect(() => {
+  const onReset = () => dispatch({ type: actionTypes.reset});
+  const onError = () => dispatch({ type: actionTypes.error});
+  const onCheck = () => dispatch({ type: actionTypes.check});
+  const onDeleted = () => dispatch({ type: actionTypes.deleted});
+  const onConfirmed = () => dispatch({ type: actionTypes.confirmed});
+  
+  const onWrite = (event) => {
+    dispatch({ type: actionTypes.write, payload: event.target.value});
+  }
+
+
+  useEffect(() => {
     console.log("Started the effect");
 
     if(!!state.loading) {
-      // dispatch({ type: 'ERROR',});
       setTimeout(() => {
         console.log("Doing the check")   
         if(state.value === SECURITY_CODE) {
-          dispatch({ type: 'CONFIRMED',});
+          onConfirmed();
         } else {
-          dispatch({ type: 'ERROR',});
+          onError();
         }
       }, 2000);
     }
@@ -51,30 +117,21 @@ export const UseReducer = ({ name }) => {
           disabled={state.loading}
           placeholder='Security code'
           value={state.value}
-          onChange={(event) => {
-            dispatch({ type: 'WRITE', payload: event.target.value });
-          }}
+          onChange={onWrite}
         />
-        <button
-          onClick={() => {
-            dispatch({ type: 'CHECK',});
-          }}
-        >Check</button>
+        <button onClick={onCheck}>
+          Check
+        </button>
       </div>
     )
   } else if (!!state.confirmed && !state.deleted) {
     return (
       <React.Fragment>
         <p>We have confirmed. are you security?</p>
-        <button onClick={() => {
-          dispatch({ type: 'DELETE',});
-        }} 
-        >
+        <button onClick={onDeleted}>
           Yes, delete
         </button>
-        <button onClick={() => {
-          dispatch({ type: 'RESET',});
-        }}>
+        <button onClick={onReset}>
           No, cancel
         </button>
       </React.Fragment>
@@ -84,9 +141,7 @@ export const UseReducer = ({ name }) => {
       <React.Fragment>
         <p>Deleted state</p>
 
-        <button onClick={() => {
-          dispatch({ type: 'RESET',});
-        }}>
+        <button onClick={onReset}>
           Reset, go back
         </button>
       </React.Fragment>
@@ -94,49 +149,5 @@ export const UseReducer = ({ name }) => {
 
   }
 }
-
-const reducer = (state, action) => {
-  switch (action.type) {
-    case 'CONFIRMED':
-      return {
-        ...state,
-        error: false,
-        loading: false, 
-        confirmed: true,
-      }
-    case 'ERROR':
-      return {
-        ...state,
-        error: true,
-        loading: false,
-      };
-    case 'CHECK':
-      return {
-        ...state,
-        loading: true,
-      };
-    case 'WRITE':
-      return {
-        ...state,
-        value: action.payload, 
-      }
-    case 'DELETE':
-      return {
-        ...state,
-        deleted: true,
-      }
-    case 'RESET':
-      return {
-        ...state,
-        confirmed: false, 
-        value: '',
-        deleted: false,
-      }
-    default:
-      return {
-        ...state,
-      };
-  }
-};
 
 
